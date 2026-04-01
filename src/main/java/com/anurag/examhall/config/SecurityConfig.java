@@ -35,15 +35,8 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        // ✅ allow your frontend (Vercel) + localhost for testing
-        config.setAllowedOriginPatterns(List.of(
-            //"https://project-tt-frontend.vercel.app",
-            "https://project-tt-frontend-z674.vercel.app",
-            "https://*.vercel.app",
-            "http://localhost:3000",
-            "http://localhost:*",
-            "http://127.0.0.1:*"
-        ));
+        // ✅ allow all Vercel domains + localhost
+        config.setAllowedOriginPatterns(List.of("*"));
 
         // ✅ allow all HTTP methods
         config.setAllowedMethods(List.of(
@@ -57,7 +50,7 @@ public class SecurityConfig {
         config.setExposedHeaders(List.of("Authorization", "Content-Type"));
 
         // ✅ allow credentials (JWT, cookies)
-        config.setAllowCredentials(true);
+        config.setAllowCredentials(false);
 
         // cache preflight response for 1 hour
         config.setMaxAge(3600L);
