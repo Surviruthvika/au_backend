@@ -19,9 +19,9 @@ public class NotificationService {
     @Autowired private NotificationRepository notifRepo;
     @Autowired private StudentRepository studentRepo;
     @Autowired private HallAllocationRepository hallRepo;
-    @Autowired private TwilioSmsService smsService;
 
     public Notification sendNotification(NotificationDTO dto) {
+
         String target;
         Notification.NotificationType type;
 
@@ -43,59 +43,28 @@ public class NotificationService {
             .target(target)
             .type(type)
             .build();
+
         notifRepo.save(n);
 
-        if (dto.isSendSms()) {
-            sendSmsToTargets(dto, n.getMessage());
-        }
+        // ✅ SMS DISABLED
+
         return n;
     }
 
-    /**
-     * Sends an SMS to every targeted student.
-     * For each student, we also append their personal exam hall details
-     * (if an allocation exists for them) so the SMS is maximally useful.
-     */
-    private void sendSmsToTargets(NotificationDTO dto, String adminMessage) {
-        List<Student> students;
-        if (dto.getType() == Notification.NotificationType.ALL_BRANCH) {
-            students = studentRepo.findAll();
-        } else if (dto.getType() == Notification.NotificationType.BRANCH_SPECIFIC) {
-            students = studentRepo.findByBranch(Student.Branch.valueOf(dto.getBranch()));
-        } else {
-            students = studentRepo.findByRollNumberIn(dto.getRollNumbers());
-        }
-
-        for (Student student : students) {
-            String sms = buildEnrichedSms(student, adminMessage);
-            smsService.sendSms(student.getPhone(), sms);
-        }
-    }
-
-    /**
-     * Builds an SMS that contains the admin's message PLUS the student's
-     * personal exam hall details pulled live from the DB.
-     *
-     * Example output:
-     *   [AU Notice] Hi Ravi, Exam tomorrow — all the best!
-     *
-     *   Your Exam Details:
-     *   Subject  : Data Structures
-     *   Hall     : Block A
-     *   Room No. : 101
-     *   Date     : 2025-04-10
-     *   Time     : 10:00 AM
-     *   - Anurag University
-     */
     private String buildEnrichedSms(Student student, String adminMessage) {
         StringBuilder sb = new StringBuilder();
+
         sb.append("[AU Notice] Hi ").append(student.getName()).append(",\n");
         sb.append(adminMessage).append("\n");
 
-        // Try to find exam hall details for this student
-        List<HallAllocation> allocs = hallRepo.findByBranchAndSection(student.getBranch(), student.getSection());
+        List<HallAllocation> allocs =
+            hallRepo.findByBranchAndSection(student.getBranch(), student.getSection());
+
         List<HallAllocation> mine = allocs.stream()
-            .filter(h -> isRollInRange(student.getRollNumber(), h.getRollNumberStart(), h.getRollNumberEnd()))
+            .filter(h -> isRollInRange(
+                student.getRollNumber(),
+                h.getRollNumberStart(),
+                h.getRollNumberEnd()))
             .toList();
 
         if (!mine.isEmpty()) {
@@ -106,7 +75,6 @@ public class NotificationService {
                 sb.append("\nRoom No. : ").append(h.getRoomNumber());
                 sb.append("\nDate     : ").append(h.getExamDate());
                 sb.append("\nTime     : ").append(h.getExamTime());
-                if (mine.size() > 1) sb.append("\n---");
             }
         }
 
@@ -120,8 +88,9 @@ public class NotificationService {
             int s = Integer.parseInt(start.replaceAll("[^0-9]", ""));
             int e = Integer.parseInt(end.replaceAll("[^0-9]", ""));
             return r >= s && r <= e;
-        } catch (NumberFormatException ex) {
-            return roll.compareTo(start) >= 0 && roll.compareTo(end) <= 0;
+        } catch (Exception ex) {
+            return roll.compareTo(start) >= 0 &&
+                   roll.compareTo(end) <= 0;
         }
     }
 
@@ -132,6 +101,9 @@ public class NotificationService {
     public List<Notification> getNotificationsForStudent(String rollNumber) {
         Student s = studentRepo.findByRollNumber(rollNumber)
             .orElseThrow(() -> new RuntimeException("Student not found"));
-        return notifRepo.findNotificationsForStudent(rollNumber, s.getBranch().name());
+
+        return notifRepo.findNotificationsForStudent(
+            rollNumber,
+            s.getBranch().name());
     }
 }
