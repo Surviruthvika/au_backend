@@ -18,7 +18,7 @@ public class SecurityConfig {
             .cors(cors -> {})
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/**").permitAll()
+                .anyRequest().permitAll()
             );
 
         return http.build();
@@ -29,7 +29,8 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of(
+        // 🔥 USE PATTERN INSTEAD OF ORIGINS
+        config.setAllowedOriginPatterns(List.of(
             "https://project-tt-frontend-z674.vercel.app"
         ));
 
@@ -41,7 +42,6 @@ public class SecurityConfig {
 
         config.setAllowCredentials(true);
 
-        // 🔥 VERY IMPORTANT
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source =
