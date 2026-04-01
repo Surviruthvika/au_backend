@@ -37,7 +37,9 @@ public class SecurityConfig {
 
         // ✅ allow your frontend (Vercel) + localhost for testing
         config.setAllowedOriginPatterns(List.of(
+            //"https://project-tt-frontend.vercel.app",
             "https://project-tt-frontend-z674.vercel.app",
+            "https://*.vercel.app",
             "http://localhost:3000",
             "http://localhost:*",
             "http://127.0.0.1:*"
